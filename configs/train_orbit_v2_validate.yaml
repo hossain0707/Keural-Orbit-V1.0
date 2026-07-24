@@ -1,0 +1,65 @@
+# Keural Orbit — v2 RECIPE-VALIDATION run (gentler, ~0.4 epoch, ~7h).
+# WHY: the v1 full run (LR 5e-5, rank 32, 1 epoch) REGRESSED on knowledge benchmarks
+# (haerae -0.11, kmmlu -0.05, mmlu -0.05) — over-adaptation / catastrophic forgetting.
+# This short run de-risks a gentler recipe BEFORE committing to another full 18h run:
+#   - learning_rate 5e-5 -> 1e-5  (5x lower: the biggest anti-forgetting lever)
+#   - lora_rank    32   -> 16     (less capacity to overwrite)
+#   - max_steps    ~1700 (~0.4 epoch) so we see the trend in ~7h, not 18h
+#   - dense-ish checkpoints so we can eval the trend
+# Experts stay adapted (lower LR should let Korean improve without wrecking knowledge).
+# If this STILL regresses, the next iteration freezes the experts.
+#
+#   cd "/home/work/keural MoE Pro/Keural Orbit"
+#   python scripts/train.py --config configs/train_orbit_v2_validate.yaml
+
+run_name: "keural-orbit-v2-validate"
+output_dir: "outputs/v2_validate"
+
+nproc_per_node: 2
+cuda_visible_devices: "0,1"
+
+require_target_verification: true    # scripts/verify_lora_targets.py (Gemma-4 gate) runs first
+
+swift_args:
+  model: "google/gemma-4-26B-A4B-it"
+  use_hf: true
+  tuner_type: lora
+  dataset: ["data/processed/train.jsonl"]
+  val_dataset: ["data/processed/eval.jsonl"]
+
+  target_regex: 'model\.language_model\.layers\.\d+\.(self_attn\.(q_proj|k_proj|v_proj|o_proj)|mlp\.(gate_proj|up_proj|down_proj))'
+  target_parameters: [gate_up_proj, down_proj]
+  lora_rank: 16                      # was 32
+  lora_alpha: 32                     # keep alpha = 2*rank
+  lora_dropout: 0.0
+  freeze_vit: true
+  freeze_aligner: true
+
+  max_length: 8192
+  truncation_strategy: delete
+  padding_free: false
+  packing: false
+
+  torch_dtype: bfloat16
+  num_train_epochs: 1
+  max_steps: 1700                    # ~0.4 epoch (eff. batch 32) -> ~7h at ~15s/step
+  per_device_train_batch_size: 1
+  per_device_eval_batch_size: 1
+  gradient_accumulation_steps: 16
+  learning_rate: 1.0e-5              # was 5.0e-5 (5x lower)
+  lr_scheduler_type: cosine
+  warmup_ratio: 0.05
+  weight_decay: 0.01
+  max_grad_norm: 1.0
+  gradient_checkpointing: true
+  deepspeed: zero2
+  attn_impl: sdpa
+
+  logging_steps: 10
+  save_steps: 400                    # checkpoints at 400/800/1200/1600 for trend eval
+  eval_steps: 400
+  save_total_limit: 6                # keep them all (max_steps 1700 -> only ~4 anyway)
+  save_only_model: false
+  report_to: [tensorboard]
+  seed: 42
+  dataloader_num_workers: 4

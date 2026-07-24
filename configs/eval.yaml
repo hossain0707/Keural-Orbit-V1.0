@@ -1,0 +1,59 @@
+# Keural Orbit — evaluation harness config (lm_eval). run_eval.py runs the same
+# suite against the stock Gemma 4 (baseline) or the merged Orbit checkpoint,
+# writing versioned results under results/. Baseline vs post-train is the ONLY
+# proof that Korean improved and general capability held (the project's goal).
+
+suites:
+  korean:
+    - kmmlu           # group of KMMLU subsets
+    - haerae
+    - kobest
+  general:
+    - mmlu
+  # DEFERRED (generation tasks — ~7h/model on the hf backend, driver blocks fast vLLM).
+  # Re-enable by moving these back under `general` once the driver supports CUDA 12.9:
+  #   - gsm8k
+  #   - humaneval     # needs HF_ALLOW_CODE_EVAL=1 + --confirm_run_unsafe_code
+
+num_fewshot: null      # use lm_eval task defaults
+batch_size: auto
+
+smoke_limit: 20        # run_eval.py --smoke per-task example cap
+
+backend:
+  # DRIVER NOTE (2026-07-23): vLLM 0.24.0 CANNOT run Gemma 4 on this box's driver
+  # (570.86.10 / CUDA 12.8). Gemma 4's heterogeneous head dims (256/512) force
+  # FlashAttention v4, whose CUTLASS-DSL kernels need CUDA 12.9 -> cudaErrorInsufficientDriver.
+  # No vLLM flag overrides it (the env var reaches the worker but Gemma4 hard-selects FA4).
+  # So default to the "hf" (transformers) backend with sdpa attention, which needs no
+  # FA4/cutlass and is the exact stack that trained the model on this driver.
+  # To use vLLM later, upgrade the NVIDIA driver to a CUDA-12.9-capable version.
+  default: hf
+  vllm:
+    tensor_parallel_size: 2
+    gpu_memory_utilization: 0.85
+    max_model_len: 8192
+    dtype: bfloat16
+    # DRIVER-COMPAT (verified 2026-07-23): on driver 570.86.10 / CUDA 12.8, vLLM
+    # 0.24.0 dies in _warmup_and_capture (cuda_graph.py) with
+    # cudaErrorInsufficientDriver. enforce_eager skips CUDA-graph capture entirely;
+    # disable_custom_all_reduce matches the Nova gateway's proven-working TP=2 config.
+    enforce_eager: true
+    disable_custom_all_reduce: true
+    # sdpa attention: no FlashAttention/CUTLASS, so no CUDA-12.9 dependency (driver-safe).
+  hf:
+    # SINGLE GPU (no parallelize): the 26B/bf16 model (~52 GB) fits on one 143 GB H200.
+    # parallelize=True crashed the general suite with `CUDA unspecified launch failure`
+    # inside accelerate's cross-device hooks (2026-07-23); single-device avoids that path.
+    model_args_extra: "dtype=bfloat16,attn_implementation=sdpa"
+
+generation:
+  temperature: 0.0     # deterministic for benchmark comparability
+
+domain:
+  # Our own domain eval — any *.jsonl in this dir with {"id","prompt","reference"}.
+  dir: "evals/domain"
+  max_new_tokens: 1024
+
+output:
+  results_dir: "results"

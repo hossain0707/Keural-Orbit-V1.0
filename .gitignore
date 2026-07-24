@@ -1,0 +1,36 @@
+# --- Keural Orbit .gitignore ---
+# This repo is source + configs + the small dataset splits. Big artifacts stay local.
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+
+# Large training data — train.jsonl is >100 MB (GitHub rejects it). Regenerate with:
+#   python scripts/build_dataset.py --out data/processed
+# eval.jsonl / pilot.jsonl / dataset_manifest.json ARE committed (small, make the
+# pilot run work out of the box).
+data/processed/train.jsonl
+data/raw/
+data/**/smoke/
+
+# Model weights & run artifacts (huge; not source)
+outputs/
+*.safetensors
+*.bin
+
+# Pipeline run outputs
+logs/
+results/
+*.partial/
+
+# HF / caches
+.cache/
+hf_cache/
+
+# Editor / OS
+.DS_Store
+.idea/
+.vscode/

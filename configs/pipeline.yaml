@@ -1,0 +1,36 @@
+# Keural Orbit — shared pipeline config. Every script loads this first, then its
+# stage config on top. All relative paths resolve against project_root.
+# SELF-CONTAINED: this folder is a standalone project (own scripts/data/configs),
+# independent of the Keural Nova (Qwen) pipeline, so it can be pushed to GitHub alone.
+
+project_root: "/home/work/keural MoE Pro/Keural Orbit"
+
+model:
+  id: "google/gemma-4-26B-A4B-it"
+  # Pinned to the downloaded snapshot (verified 2026-07-22: 12 files, 1013 tensors,
+  # 30 layers / 128 experts / tied embeddings / bf16).
+  revision: "4d7ae4984b7db7de8f8457170b3f1a419ee76d52"
+
+paths:
+  data_dir: "data"
+  raw_dir: "data/raw"
+  processed_dir: "data/processed"
+  results_dir: "results"
+  outputs_dir: "outputs"
+  logs_dir: "logs"
+
+seed: 42
+
+hf:
+  # Where the final merged model is published (user account: mkd-hossain).
+  publish_repo: "mkd-hossain/Keural-Orbit-26B-A4B"
+  private: true
+
+runtime:
+  # A GPU counts as "free" if used memory is below this many MiB (another team's
+  # job / the Nova gateway may be running — common.assert_gpus_free refuses to start).
+  gpu_free_mib_threshold: 2048
+  min_free_disk_gb:
+    dataset: 20
+    train: 120
+    merge: 140

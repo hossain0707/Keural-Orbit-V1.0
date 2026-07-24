@@ -1,0 +1,26 @@
+# Keural Orbit — merge, model card, upload. Gemma 4 base (no MTP; tied embeddings).
+
+merge:
+  # LoRA checkpoint dir (contains adapter_config.json). Usually
+  # outputs/full/.../checkpoint-XXXX ; pass --checkpoint to override.
+  checkpoint: null
+  merged_dir: "outputs/merged/Keural-Orbit-26B-A4B"
+  # Ship processor/tokenizer files with the merged model (Gemma 4 is multimodal —
+  # the vision processor files must ship). NOTE: unlike the Qwen pipeline there is
+  # NO preserve_mtp here — Gemma 4 has no MTP block (VERIFIED-FACTS-ORBIT §4).
+  copy_aux_files: true
+
+model_card:
+  name: "Keural-Orbit-26B-A4B"
+  base_model: "google/gemma-4-26B-A4B-it"
+  license: "gemma"            # Gemma Terms of Use (google/gemma-4-26B-A4B-it is Gemma-licensed)
+  languages: [ko, en]
+  # Populated automatically from results/ (baseline + post-training) and
+  # data/processed/dataset_manifest.json by make_model_card.py.
+  baseline_results: null      # auto: latest results/<base tag>/*/summary.json
+  trained_results: null       # auto: latest results/<merged tag>/*/summary.json
+
+upload:
+  repo: "mkd-hossain/Keural-Orbit-26B-A4B"   # user's HF account
+  private: true               # flip to false only after confirming storage + license posture
+  # Uses `hf upload` (current CLI; huggingface-cli is deprecated in hub 1.x).

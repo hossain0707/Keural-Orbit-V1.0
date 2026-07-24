@@ -1,0 +1,31 @@
+{
+  "total": 146274,
+  "train": 144812,
+  "eval": 1462,
+  "by_source": {
+    "ko_conversation": 50000,
+    "magicoder_clean": 25000,
+    "openorca": 12499,
+    "kmmlu_train": 11786,
+    "gsm8k_train": 7473,
+    "ko_longform": 5000,
+    "ultrachat": 12500,
+    "keural_identity": 1500,
+    "metamath": 12516,
+    "mmlu_auxtrain": 6926,
+    "arc_train": 1074
+  },
+  "by_license": {
+    "cc-by-4.0": 50000,
+    "mit": 77271,
+    "cc-by-sa-4.0": 12860,
+    "apache-2.0": 4643,
+    "internal": 1500
+  },
+  "seed": 42,
+  "rules": [
+    "test-split-excluded",
+    "code-ast-validated",
+    "identity-decontaminated"
+  ]
+}

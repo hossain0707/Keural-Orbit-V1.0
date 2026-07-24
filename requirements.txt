@@ -1,0 +1,29 @@
+# Keural Orbit — load-bearing pins (verified working on 2x H200, CUDA 12.9).
+# These are the versions the pipeline was built + verified against. The three
+# starred pins are NOT optional (VERIFIED-FACTS-ORBIT):
+#
+#   transformers 5.12.1  -> has model_type "gemma4" / Gemma4ForConditionalGeneration (*)
+#   ms-swift     4.4.0    -> `tuner_type` (not train_type); registers gemma4 template (*)
+#   peft         0.19.1   -> ParamWrapper merges fused MoE experts; needs lora_dropout=0.0 (*)
+#
+# Install torch matching your CUDA first (this env: torch 2.11.0+cu129), then:
+#   pip install -r requirements.txt
+# NOTE: on shared machines export PYTHONNOUSERSITE=1 and clear PYTHONPATH so a
+# stale ~/.local does not shadow these (a metadata read here reported wrong
+# versions until ~/.local was excluded).
+
+transformers==5.12.1
+ms-swift==4.4.0
+peft==0.19.1
+deepspeed==0.19.2
+accelerate==1.14.0
+datasets==5.0.0
+safetensors==0.5.3
+huggingface-hub==0.36.2
+sentencepiece==0.2.1
+tokenizers==0.22.2
+pyyaml
+# eval (optional, for scripts/run_eval.py)
+lm-eval==0.4.8
+# torch pinned separately to match CUDA — installed out of band:
+# torch==2.11.0+cu129

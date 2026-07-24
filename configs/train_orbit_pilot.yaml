@@ -1,0 +1,57 @@
+# Keural Orbit — PILOT SFT run (~5k rows) on google/gemma-4-26B-A4B-it.
+# Same recipe as train_orbit_full.yaml, small data + fast checkpoints, to prove the
+# loop end-to-end (gate -> launch -> checkpoint -> post-verify) before the full run.
+#
+#   cd "/home/work/keural MoE Pro/Keural Orbit"
+#   python scripts/train.py --config configs/train_orbit_pilot.yaml
+
+run_name: "keural-orbit-pilot"
+output_dir: "outputs/pilot"
+
+nproc_per_node: 2
+cuda_visible_devices: "0,1"
+
+require_target_verification: true    # scripts/verify_lora_targets.py is the Gemma-4 gate
+
+swift_args:
+  model: "google/gemma-4-26B-A4B-it"
+  use_hf: true
+  tuner_type: lora
+  dataset: ["data/processed/pilot.jsonl"]
+  val_dataset: ["data/processed/eval.jsonl"]
+
+  target_regex: 'model\.language_model\.layers\.\d+\.(self_attn\.(q_proj|k_proj|v_proj|o_proj)|mlp\.(gate_proj|up_proj|down_proj))'
+  target_parameters: [gate_up_proj, down_proj]
+  lora_rank: 32
+  lora_alpha: 64
+  lora_dropout: 0.0
+  freeze_vit: true
+  freeze_aligner: true
+
+  max_length: 8192
+  truncation_strategy: delete
+  padding_free: false
+  packing: false
+
+  torch_dtype: bfloat16
+  num_train_epochs: 1
+  per_device_train_batch_size: 1
+  per_device_eval_batch_size: 1
+  gradient_accumulation_steps: 16
+  learning_rate: 5.0e-5
+  lr_scheduler_type: cosine
+  warmup_ratio: 0.05
+  weight_decay: 0.01
+  max_grad_norm: 1.0
+  gradient_checkpointing: true
+  deepspeed: zero2
+  attn_impl: sdpa
+
+  logging_steps: 5
+  save_steps: 50
+  eval_steps: 50
+  save_total_limit: 3
+  save_only_model: false
+  report_to: [tensorboard]
+  seed: 42
+  dataloader_num_workers: 4
