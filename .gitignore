@@ -13,6 +13,7 @@ venv/
 # eval.jsonl / pilot.jsonl / dataset_manifest.json ARE committed (small, make the
 # pilot run work out of the box).
 data/processed/train.jsonl
+data/*/train.jsonl
 data/raw/
 data/**/smoke/
 

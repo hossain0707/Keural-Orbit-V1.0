@@ -4,7 +4,7 @@ merge:
   # LoRA checkpoint dir (contains adapter_config.json). Usually
   # outputs/full/.../checkpoint-XXXX ; pass --checkpoint to override.
   checkpoint: null
-  merged_dir: "outputs/merged/Keural-Orbit-26B-A4B"
+  merged_dir: "outputs/merged/Keural-Orbit-v2-full"
   # Ship processor/tokenizer files with the merged model (Gemma 4 is multimodal —
   # the vision processor files must ship). NOTE: unlike the Qwen pipeline there is
   # NO preserve_mtp here — Gemma 4 has no MTP block (VERIFIED-FACTS-ORBIT §4).
